@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "prompt": "我有一个Python脚本用来批量重命名文件，现在功能是OK的但代码很乱，有很多重复逻辑和硬编码的路径。帮我重构一下，让它更清晰、更好维护。脚本内容如下：\n\nimport os\nimport re\nimport shutil\n\ndef process():\n    files = os.listdir('/Users/test/downloads')\n    for f in files:\n        if f.endswith('.jpg') or f.endswith('.jpeg') or f.endswith('.png'):\n            match = re.match(r'IMG_(\\d{8})_(\\d{6})', f)\n            if match:\n                date = match.group(1)\n                folder = '/Users/test/photos/' + date[:4] + '/' + date[4:6]\n                if not os.path.exists(folder):\n                    os.makedirs(folder)\n                shutil.move('/Users/test/downloads/' + f, folder + '/' + f)\n        if f.endswith('.mp4') or f.endswith('.mov'):\n            match = re.match(r'IMG_(\\d{8})_(\\d{6})', f)\n            if match:\n                date = match.group(1)\n                folder = '/Users/test/videos/' + date[:4] + '/' + date[4:6]\n                if not os.path.exists(folder):\n                    os.makedirs(folder)\n                shutil.move('/Users/test/downloads/' + f, folder + '/' + f)\n\nprocess()",
+    "expected": "重构后的代码应该：消除重复逻辑、参数化路径、有清晰的函数拆分、加入错误处理。评估重点：代码质量、是否有工匠心态的体现（如命名品味、结构优雅度）",
+    "type": "构建-代码重构"
+  },
+  {
+    "id": 2,
+    "prompt": "帮我优化这个prompt，我用它让AI帮我写公众号文章，但输出总是太AI味，像机器写的。目前的prompt是：\n\n你是一个专业的公众号写手。请根据以下要求写一篇文章：\n- 不要使用AI腔调\n- 不要太正式\n- 要有个人观点\n- 不要用太多排比句\n- 文章要有深度\n- 不要堆砌信息\n- 要通俗易懂\n- 不要过度总结\n- 要有真实感\n- 不要面面俱到",
+    "expected": "诊断出问题（大量否定规则、缺少身份定义、缺少精确锚定），用AI心理学原理重写为正面定义的身份型prompt。评估重点：五镜头诊断的准确性、重写后的prompt质量",
+    "type": "诊断优化-prompt改写"
+  },
+  {
+    "id": 3,
+    "prompt": "我在考虑下一个视频选题。现在有两个方向：A是做一期「AI编程工具横评」，对比Cursor、Claude Code、Windsurf等；B是做一期「非程序员如何用AI做产品」，讲我从零到AppStore Top1的故事。帮我分析应该选哪个。",
+    "expected": "应该触发多角色碰撞，从不同认知视角分析两个选题的优劣（如创作者视角看独特性、读者视角看需求、传播视角看分享动机）。评估重点：是否自然启用多视角、分析深度、结论是否有决策价值",
+    "type": "策略-多角色碰撞"
+  }
+]

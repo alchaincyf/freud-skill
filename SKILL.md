@@ -109,6 +109,7 @@ LLM内部存在一个全局工作空间：模型能报告、能持有、能用�
 - 单步机械执行（翻译一句话、格式转换、简单的正则替换）
 - 用户明确说「直接做」「不用多想」「快速回答」
 - 任务上下文已经非常清晰、无歧义、无权衡空间
+- 用户明确说「配置存下来」「下次还用这套」——强制输出 IR（见「模式一扩展：认知配置 IR 输出」），即使任务简单
 
 启用但最小化的情况：如果任务跨多个认知域且主次不明（如「帮我写一篇讲解技术的公众号文章」同时属于构建/创作/沟通），一句话点出主次即可（「主要是创作，次要是沟通，构建细节服从表达」），不展开完整四步。
 
@@ -193,6 +194,61 @@ LLM内部存在一个全局工作空间：模型能报告、能持有、能用�
 
 ---
 
+## 模式一扩展：认知配置 IR 输出（可选，默认关）
+
+### 何时输出 IR
+
+满足**全部**条件时，在任务结束时把认知配置序列化为 `cognitive-config.yaml`，
+写入当前工作目录（或用户指定的 `--ir-dir <path>`）：
+
+1. 任务属于高复用价值域：复杂决策 / 深度创作 / 分析诊断 / 策略规划
+2. 认知配置在任务中被证明有效（用户反馈好、或输出自评达标）
+3. 同名 `cognitive-config.yaml` 不存在，或用户确认覆盖
+
+简单任务、纯事实查询、用户说「不用存」——不输出，避免噪音。
+
+### IR 输出格式
+
+按 Cognitive Config IR 规范 v0.1（规范全文见 PR 附带的 `cognitive-config-ir-v0.1.md`）：
+
+```yaml
+schema_version: "0.1"
+skill: <目标技能或任务类型>
+cognitive_config:
+  identity: { anchor, one_liner, role_space_ref? }
+  beliefs: [...]
+  taste_standard: [...]
+  decision_heuristics: [...]
+  emotion_calibration: "..."
+  workspace_hygiene: { externalize, defer, negative_frames? }
+evaluation_harness:                       # 可选，复杂任务建议带
+  dimensions: [{ name, weight, probe }]
+  test_cases: [{ input, expected_behavior? }]
+  fitness_function: "weighted_sum(...)"
+provenance:
+  source: "freud-skill 模式一执行产物"
+  config_version: "<skill>-v<序号>"
+  parent: "<上一个 config_version 或 null>"
+```
+
+### 序列化规则（对齐六原理，防止产出坏 IR）
+
+- **正面定义**：`beliefs` 全部用「你是/你相信/你重视」句式；`negative_frames`
+  只记录被转换掉的否定句，正常应为空
+- **一致性**：序列化前自检 beliefs/taste 无矛盾对；发现矛盾必须二选一或加边界条件
+- **容量卫生**：beliefs + decision_heuristics 合计 ≤ 7 条，超出则提示合并
+- **锚定精度**：能用 `if ...: ...` 表达的启发式，不写模糊形容词
+- **可进化**：禁止写死步骤，只写身份/信念/品味/启发式——这些才是 darwin 可变异的结构
+
+### 与 darwin-skill 的握手协议
+
+1. freud 产出 `cognitive-config.yaml`
+2. darwin 读取并运行评估（`--evolve <config.yaml>`）
+3. darwin 写回新版本 `cognitive-config.vN+1.yaml` 并 git commit
+4. freud 下次执行时优先读取目录内最新 `cognitive-config*.yaml` 作为认知准备起点
+
+---
+
 ## 模式二：诊断优化
 
 当用户提交prompt、skill、或系统提示请求优化时，用六条原理逐一诊断。
@@ -269,6 +325,7 @@ LLM内部存在一个全局工作空间：模型能报告、能持有、能用�
 1. 诊断摘要（阶段A的版本，可能在B之后有微调）
 2. 重写版prompt（完整可直接用）
 3. before/after关键差异（至少3处具体对比，每处一句理由）
+4. 可选的 `cognitive-config.yaml`（机器可读版，与重写稿等价，便于 darwin-skill 进化）
 
 ### 重写原则
 
